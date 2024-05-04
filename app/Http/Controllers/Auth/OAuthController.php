@@ -1,8 +1,11 @@
 <?php
 
+namespace App\Http\Controllers\Auth;
+
 use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Controller;
 
 class OAuthController extends Controller
 {
@@ -13,19 +16,14 @@ class OAuthController extends Controller
 
     public function handleGoogleCallback()
     {
-        $user = Socialite::driver('google')->user();
-        $this->handleProviderCallback($user);
-    }
-
-    public function redirectToFacebook()
-    {
-        return Socialite::driver('facebook')->redirect();
-    }
-
-    public function handleFacebookCallback()
-    {
-        $user = Socialite::driver('facebook')->user();
-        $this->handleProviderCallback($user);
+        try {
+            $user = Socialite::driver('google')->user();
+            $this->handleProviderCallback($user);
+            return redirect()->route('home');
+        } catch (\Exception $e) {
+            // Log or display the error message
+            dd($e->getMessage());
+        }
     }
 
     protected function handleProviderCallback($user)
@@ -38,12 +36,11 @@ class OAuthController extends Controller
             $newUser = User::create([
                 'name' => $user->getName(),
                 'email' => $user->getEmail(),
-                // Add any additional fields you want to populate here
+                'password' => Hash::make("password123"),
             ]);
 
             Auth::login($newUser);
         }
 
-        return redirect()->intended('/');
     }
 }
